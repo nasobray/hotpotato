@@ -1,3 +1,4 @@
+const fileServerHandler = require("./fileserver")
 const telegramHandler = require("./telegram")
 const fileHandler = require("./filehandler")
 const utilities = require("./utilities")
@@ -8,6 +9,10 @@ const pathLib = require('path');
 
 const watcher = require('chokidar');
 var chalk = require('chalk');
+
+if (config.enableFileReceiveServer)
+  fileServerHandler.initFileReceiveServer();
+
 
 telegramHandler.initHelpHandler();
 

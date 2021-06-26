@@ -1,7 +1,7 @@
 {
     "name": "HotPotato",
     "description": "A software that takes any file that you through to the Landing Zone and distributes it to a set of hard drives. Usually from one fast storage (NVME) to one of many slow storage (SATA)",
-    "homepage": "http://google.com",
+    "homepage": "http://github.com",
     "keywords": [
         "util",
         "functional",
@@ -12,10 +12,13 @@
     "author": "Nasser Al Rayhi <nasser.alrayhi@gmail.com>",
     "contributors": [],
     "dependencies": {
+        "busboy": "^0.3.1",
         "chalk": "^4.1.1",
         "check-disk-space": "^3.0.1",
         "chokidar": "^3.5.2",
+        "form-data": "^4.0.0",
         "fs-extra": "^10.0.0",
+        "is-ip": "^3.1.0",
         "md5-file": "^5.0.0",
         "node-telegram-bot-api": "^0.53.0",
         "roundround": "^0.2.0",
