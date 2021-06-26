@@ -1,0 +1,30 @@
+{
+    "name": "HotPotato",
+    "description": "A software that takes any file that you through to the Landing Zone and distributes it to a set of hard drives. Usually from one fast storage (NVME) to one of many slow storage (SATA)",
+    "homepage": "http://google.com",
+    "keywords": [
+        "util",
+        "functional",
+        "server",
+        "client",
+        "browser"
+    ],
+    "author": "Nasser Al Rayhi <nasser.alrayhi@gmail.com>",
+    "contributors": [],
+    "dependencies": {
+        "chalk": "^4.1.1",
+        "check-disk-space": "^3.0.1",
+        "chokidar": "^3.5.2",
+        "fs-extra": "^10.0.0",
+        "md5-file": "^5.0.0",
+        "node-telegram-bot-api": "^0.53.0",
+        "roundround": "^0.2.0",
+        "terminal-kit": "^2.1.5"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/documentcloud/underscore.git"
+    },
+    "main": "main.js",
+    "version": "0.0.1"
+}
