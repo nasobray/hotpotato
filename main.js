@@ -1,3 +1,4 @@
+const fileServerHandler = require("./fileserver")
 const telegramHandler = require("./telegram")
 const fileHandler = require("./filehandler")
 const utilities = require("./utilities")
@@ -5,11 +6,18 @@ const config = require('./config');
 const pathLib = require('path');
 
 
-
 const watcher = require('chokidar');
 var chalk = require('chalk');
 
-telegramHandler.initHelpHandler();
+if (config.enableFileReceiveServer)
+  fileServerHandler.initFileReceiveServer();
+
+if (config.enableTelegramNotifications)
+{
+
+  telegramHandler.initTelegram();
+
+}
 
 console.log(chalk.blue(utilities.consoleTimestamp()) + 'Welcome! HotPotato. System has been loaded.');
 

@@ -3,49 +3,47 @@ const config = require('./config');
 const TelegramBot = require('node-telegram-bot-api');
 
 const token = config.telegramToken;
-const TelegramChatBot = new TelegramBot(token, {
-    polling: true
-});
-
-
+var TelegramChatBot = null;
 
 
 
 
 module.exports = {
 
-    initHelpHandler: function () {
+  initTelegram: function () {
 
-        TelegramChatBot.onText(/\/help/, (msg, match) => {
+    TelegramChatBot = new TelegramBot(token, {
+      polling: true
+    });
 
-            const chatId = msg.chat.id;
-            var helpString = '';
-            helpString = helpString + 'User ID: ' + chatId + '\n';
-            helpString = helpString + 'Welcome to HotPotato.\n';
+    TelegramChatBot.onText(/\/help/, (msg, match) => {
 
-            TelegramChatBot.sendMessage(chatId, helpString);
+      const chatId = msg.chat.id;
+      var helpString = '';
+      helpString = helpString + 'User ID: ' + chatId + '\n';
+      helpString = helpString + 'Welcome to HotPotato.\n';
 
-        });
+      TelegramChatBot.sendMessage(chatId, helpString);
+
+    });
+
+  },
 
 
-
-    } , 
-
-
-    telegramBroadcast : function (message) {
+  telegramBroadcast: function (message) {
 
 
 
     for (var i = 0; i < config.telegramUsers.length; i++) {
-  
-      TelegramChatBot.sendMessage( config.telegramUsers[i] , message);
-  
-  
+
+      TelegramChatBot.sendMessage(config.telegramUsers[i], message);
+
+
     }
-  
-  
-  
-  
+
+
+
+
   }
 
 
