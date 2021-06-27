@@ -1,5 +1,8 @@
 var config = {};
 
+config.nodeName =  'TEST'; 
+config.nodeIP =  '192.168.1.1'; 
+
 config.enableTelegramNotifications =  true; 
 
 config.telegramUsers = [];

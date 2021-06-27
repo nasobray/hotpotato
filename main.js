@@ -6,15 +6,18 @@ const config = require('./config');
 const pathLib = require('path');
 
 
-
 const watcher = require('chokidar');
 var chalk = require('chalk');
 
 if (config.enableFileReceiveServer)
   fileServerHandler.initFileReceiveServer();
 
+if (config.enableTelegramNotifications)
+{
 
-telegramHandler.initHelpHandler();
+  telegramHandler.initTelegram();
+
+}
 
 console.log(chalk.blue(utilities.consoleTimestamp()) + 'Welcome! HotPotato. System has been loaded.');
 

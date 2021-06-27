@@ -8,7 +8,7 @@ const utilities = require("./utilities")
 const telegramHandler = require("./telegram")
 const md5File = require('md5-file')
 const isIp = require('is-ip');
-var FormData = require('form-data');
+const PromiseFtp = require('promise-ftp');
 
 
 var destinationStorage = roundround(config.destinationStorage);
@@ -32,10 +32,13 @@ module.exports = {
             chosenDestinationStorage = destinationStorage();
             counterTries++;
 
+
+
             if (isIp(chosenDestinationStorage)) {
 
-
+                foundCandidate = true;
                 this.moveFileRemoteServer(originalPath, chosenDestinationStorage);
+                break;
 
 
             } else if (fs.existsSync(chosenDestinationStorage)) {
@@ -58,8 +61,8 @@ module.exports = {
                 if (freeSize > config.minimumFreeSizeInGB && diskSize > config.minimumDiskSizeInGB) { // in GB
                     foundCandidate = true;
 
-                    moveFileLocalStorage(originalPath, chosenDestinationStorage);
-
+                    this.moveFileLocalStorage(originalPath, chosenDestinationStorage);
+                    break;
 
                 }
 
@@ -68,8 +71,8 @@ module.exports = {
 
 
 
-            if (counterTries > 100) {
-                console.log(consoleTimestamp() + 'Could not copy file ' + fileName);
+            if (counterTries > 100 || foundCandidate) {
+                console.log(utilities.consoleTimestamp() + 'Could not copy file ' + fileName);
                 break;
             }
 
@@ -112,7 +115,7 @@ module.exports = {
 
 
         console.log(chalk.blue(utilities.consoleTimestamp()) + 'Found candidate hard drive to move the file to. Hard drive: ' + diskPath + ', Total size: ' + diskSize.toFixed(2) + 'GB , Free Space: ' + freeSize.toFixed(2) + 'GB , Used Space: ' + usedSpace.toFixed(2) + 'GB');
-        console.log(chalk.blue(utilities.consoleTimestamp()) + 'Initiating moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage + fileName);
+        console.log(chalk.blue(utilities.consoleTimestamp()) + 'Initiating moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage);
 
 
 
@@ -149,10 +152,11 @@ module.exports = {
                 let endTimeStamp = Math.floor(Date.now() / 1000);
                 let transferSpeed = fileSizeMB / (endTimeStamp - startTimeStamp);
 
-                console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.green('[DONE]') + '\tSuccess moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage + fileName + '. Taken time: ' + utilities.secondsToDhms(endTimeStamp - startTimeStamp) + '. Average transfer speed is ' + transferSpeed.toFixed(2) + ' MB/s');
+                console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.green('[DONE]') + '\tSuccess moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage + '. Taken time: ' + utilities.secondsToDhms(endTimeStamp - startTimeStamp) + '. Average transfer speed is ' + transferSpeed.toFixed(2) + ' MB/s');
 
                 let telegramString = '';
-                telegramString = telegramString + 'Success moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB)';
+                telegramString = telegramString + '[' + config.nodeName + ']';
+                telegramString = telegramString + '\n\nSuccess moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB)';
                 telegramString = telegramString + '\n\nDestination: ' + chosenDestinationStorage;
                 telegramString = telegramString + '\n\nTaken time: ' + utilities.secondsToDhms(endTimeStamp - startTimeStamp)
                 telegramString = telegramString + '\n\nAverage transfer speed is ' + transferSpeed.toFixed(2) + ' MB/s'
@@ -172,15 +176,60 @@ module.exports = {
 
     moveFileRemoteServer: function (originalPath, chosenDestinationStorage) {
 
-        let form = new FormData();
+
         let fileName = pathLib.basename(originalPath);
 
-        form.append(fileName, fs.createReadStream(originalPath , {bufferSize: config.SendBufferSize } ));
 
-        form.submit('http://' + chosenDestinationStorage + ':' + config.FileReceiveServerPort , function (err, res) {
-            // res – response object (http.IncomingMessage)  //
-            res.resume();
-        });
+        let fileSize = utilities.getFilesizeInBytes(originalPath);
+        let fileSizeMB = fileSize / (1024 * 1024);
+        let fileSizeGB = fileSize / 1073741824;
+        let startTimeStamp = Math.floor(Date.now() / 1000);
+
+
+        let options = {
+            host: chosenDestinationStorage,
+            port: config.FileReceiveServerPort
+        }
+
+
+        let ftp = new PromiseFtp(options);
+
+
+        ftp.connect(options)
+            .then(function (serverMessage) {
+
+                console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.yellow('[IN PROGRESS]') +  'Initiating moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage);
+
+
+                return ftp.put(originalPath, 'x' + fileName);
+
+
+            }).then(function () {
+
+                fs.unlinkSync(originalPath);
+                let endTimeStamp = Math.floor(Date.now() / 1000);
+                let transferSpeed = fileSizeMB / (endTimeStamp - startTimeStamp);
+                console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.green('[DONE]') + '\tSuccess moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage + '. Taken time: ' + utilities.secondsToDhms(endTimeStamp - startTimeStamp) + '. Average transfer speed is ' + transferSpeed.toFixed(2) + ' MB/s');
+
+
+                let telegramString = '';
+                telegramString = telegramString + '[' + config.nodeName + ']';
+                telegramString = telegramString + '\n\nSuccess moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB)';
+                telegramString = telegramString + '\n\nDestination: ' + chosenDestinationStorage;
+                telegramString = telegramString + '\n\nTaken time: ' + utilities.secondsToDhms(endTimeStamp - startTimeStamp)
+                telegramString = telegramString + '\n\nAverage transfer speed is ' + transferSpeed.toFixed(2) + ' MB/s'
+
+
+                if (config.enableTelegramNotifications)
+                    telegramHandler.telegramBroadcast(telegramString);
+
+                return ftp.end();
+
+
+            });
+
+
+
 
 
     }
