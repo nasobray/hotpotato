@@ -16,6 +16,7 @@ var destinationStorage = roundround(config.destinationStorage);
 
 module.exports = {
 
+    pendingFileTransfer: 0,
 
     moveFile: async function (originalPath) {
 
@@ -37,7 +38,15 @@ module.exports = {
             if (isIp(chosenDestinationStorage)) {
 
                 foundCandidate = true;
-                this.moveFileRemoteServer(originalPath, chosenDestinationStorage);
+
+                if (this.pendingFileTransfer <= config.maxFileTransfer) {
+                    this.pendingFileTransfer = this.pendingFileTransfer + 1;
+                    this.moveFileRemoteServer(originalPath, chosenDestinationStorage);
+
+                }else{
+                    console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.red('[ERROR]') + '\tParallel file transfer is exceeding maximum');
+
+                }
                 break;
 
 
@@ -61,7 +70,15 @@ module.exports = {
                 if (freeSize > config.minimumFreeSizeInGB && diskSize > config.minimumDiskSizeInGB) { // in GB
                     foundCandidate = true;
 
-                    this.moveFileLocalStorage(originalPath, chosenDestinationStorage);
+                    if (this.pendingFileTransfer <= config.maxFileTransfer) {
+                        this.pendingFileTransfer = this.pendingFileTransfer + 1;
+                        this.moveFileLocalStorage(originalPath, chosenDestinationStorage);
+
+                    } else{
+                        console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.red('[ERROR]') + '\tParallel file transfer is exceeding maximum');
+
+                    }
+                    
                     break;
 
                 }
@@ -98,6 +115,7 @@ module.exports = {
 
         } catch (err) {
 
+            this.pendingFileTransfer = this.pendingFileTransfer - 1;
             console.log(err);
 
         }
@@ -146,6 +164,8 @@ module.exports = {
 
 
                 fs.unlinkSync(originalPath);
+                this.pendingFileTransfer = this.pendingFileTransfer - 1;
+
                 fs.chmodSync(chosenDestinationStorage + fileName, '777');
 
 
@@ -169,6 +189,8 @@ module.exports = {
 
             })
             .catch(err => {
+                this.pendingFileTransfer = this.pendingFileTransfer - 1;
+
                 console.error(err);
             })
 
@@ -198,15 +220,17 @@ module.exports = {
         ftp.connect(options)
             .then(function (serverMessage) {
 
-                console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.yellow('[IN PROGRESS]') +  'Initiating moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage);
+                console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.yellow('[IN PROGRESS]') + 'Initiating moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage);
 
 
-                return ftp.put(originalPath, 'x' + fileName);
+                return ftp.put(originalPath, fileName);
 
 
             }).then(function () {
 
                 fs.unlinkSync(originalPath);
+                this.pendingFileTransfer = this.pendingFileTransfer - 1;
+
                 let endTimeStamp = Math.floor(Date.now() / 1000);
                 let transferSpeed = fileSizeMB / (endTimeStamp - startTimeStamp);
                 console.log(chalk.blue(utilities.consoleTimestamp()) + chalk.green('[DONE]') + '\tSuccess moving file ' + fileName + ' (' + fileSizeGB.toFixed(2) + 'GB) to destination ' + chosenDestinationStorage + '. Taken time: ' + utilities.secondsToDhms(endTimeStamp - startTimeStamp) + '. Average transfer speed is ' + transferSpeed.toFixed(2) + ' MB/s');
