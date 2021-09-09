@@ -4,6 +4,7 @@ const fileHandler = require("./filehandler")
 const utilities = require("./utilities")
 const config = require('./config');
 const pathLib = require('path');
+var findRemoveSync = require('find-remove');
 
 
 const watcher = require('chokidar');
@@ -12,12 +13,29 @@ var chalk = require('chalk');
 if (config.enableFileReceiveServer)
   fileServerHandler.initFileReceiveServer();
 
-if (config.enableTelegramNotifications)
-{
+if (config.enableTelegramNotifications) {
 
   telegramHandler.initTelegram();
 
 }
+
+if (config.deleteOldFiles) {
+
+
+  setInterval(function(){
+
+    console.log(chalk.blue(utilities.consoleTimestamp()) + 'Removing old files');
+
+    findRemoveSync(config.deleteOldFilesPath , {age: {seconds: config.deleteOldFilesTimer } , extensions: config.deleteOldFilesExtention});
+
+  }     , 40 * 1000)
+
+
+
+
+}
+
+
 
 console.log(chalk.blue(utilities.consoleTimestamp()) + 'Welcome! HotPotato. System has been loaded.');
 

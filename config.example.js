@@ -38,5 +38,13 @@ config.RecieveBufferSize  = 2 * 1024 * 1024;
 config.SendBufferSize  = 1 * 1024 * 1024;
 
 
+config.deleteOldFiles =  true; 
+config.deleteOldFilesExtention =  '.img'; 
+config.deleteOldFilesPath =  '/path/path/path'; 
+config.deleteOldFilesTimer =  60 * 1; 
+
+
+config.maxFileTransfer =  4 - 1; 
+
 
 module.exports = config;
